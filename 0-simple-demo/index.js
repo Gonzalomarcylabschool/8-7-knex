@@ -9,15 +9,14 @@ const getPets = async () => {
 };
 
 const getPeople = async () => {
-  // We can use `` to create multi-line queries
   const query = `
-    SELECT * 
+    SELECT *
     FROM people
-  `
+  `;
   // most of the time, we immediately destructure the rows out of the object
-  const { rows } = await knex.raw(query);
+  const { rows } = await knex.raw(query)
   return rows;
-};
+}
 
 const createPet = async (name, type, owner_id) => {
   // The ? is how we dynamically insert values into a query
@@ -25,32 +24,40 @@ const createPet = async (name, type, owner_id) => {
   // dynamic values into a SQL query through interpolation: `${}`
   const query = `
     INSERT INTO pets (name, type, owner_id)
-    VALUES (?, ?, ?)
-  `
-
+    VALUES (?, ?, ?)`
   // We can set the value for each ? by providing an ordered array
   // as a second argument to knex.raw
   const { rows } = await knex.raw(query, [name, type, owner_id]);
   return rows;
 };
 
-
-// given an owner name and type, return
-const getPetsByOwnerNameAndType = async (ownerName, type) => {
-
+const getPetsByOwnerName = async (ownerName) => {
+  const query = `
+    SELECT pets.name, pets.type
+    FROM pets
+      JOIN people ON pets.owner_id = people.id
+    WHERE people.name=?`
+  const { rows } = await knex.raw(query, [ownerName]);
+  return rows;
 }
 
 const main = async () => {
-  await createPet('Swiper', 'fox', 3);
+  await createPet('Swiper', 'fox', 4);
+  await createPet('Snoopy', 'dog', 4);
 
   const pets = await getPets();
-  console.log('pets:', pets);
-
   const people = await getPeople();
-  console.log('people:', people);
+  const bensPets = await getPetsByOwnerName('Ben Spector');
+  // const annsDogs = await getPetsByOwnerNameAndType('Ann Duong', 'dog');
+  // const JamesBaldwinBooks = await getBooksByAuthor('James', 'Baldwin');
+  // const annsProducts = await getProductsBoughtByCustomer('Ann');
 
-  const annsDogs = await getPetsByOwnerNameAndType('ann', 'dog');
-  console.log('anns dogs:', annsDogs);
+  console.log('all pets:', pets);
+  console.log('all people:', people);
+  console.log('Ben\'s pets:', bensPets);
+  // console.log('anns dogs:', annsDogs);
+  // console.log('James Baldwin Books:', JamesBaldwinBooks);
+  // console.log('anns products:', annsProducts);
 
   knex.destroy();
 }
